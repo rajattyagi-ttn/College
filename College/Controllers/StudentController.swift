@@ -160,7 +160,6 @@ class StudentController: UIViewController {
 
 extension StudentController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        let studentList = realm.objects(Student.self)
         return filteredData.count
     }
     
