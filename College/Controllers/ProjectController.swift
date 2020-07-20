@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class ProjectController: UIViewController {
+class ProjectController: UIViewController, Storyboarded {
 
     @IBOutlet weak var projectsTableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
@@ -19,16 +19,22 @@ class ProjectController: UIViewController {
     var projectsArray: [Project]!
     var filteredData: [Project]!
     
+    weak var coordinator: ProjectCoordinator?
+    
+    var projectViewModel = ProjectViewModel()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         let nib = UINib.init(nibName: "ProjectTableViewCell", bundle: nil)
-        projectsTableView.register(nib, forCellReuseIdentifier: "ProjectTVCell")
+        projectsTableView?.register(nib, forCellReuseIdentifier: "ProjectTVCell")
         
-        searchBar.delegate = self
-        projectList = realm.objects(Project.self)
-        projectsArray = projectList?.toArray()
-        filteredData = projectsArray
+        searchBar?.delegate = self
+//        projectList = realm.objects(Project.self)
+//        projectsArray = projectList?.toArray()
+//        filteredData = projectsArray
+        
+        projectViewModel.getProjectList()
         
        
     }
@@ -38,24 +44,21 @@ class ProjectController: UIViewController {
 
 extension ProjectController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return filteredData.count
+        return projectViewModel.filteredData.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         
         let cell = projectsTableView.dequeueReusableCell(withIdentifier: "ProjectTVCell", for: indexPath) as! ProjectTableViewCell
-        cell.projectNameLabel.text = filteredData[indexPath.row].name
+        cell.projectNameLabel.text = projectViewModel.filteredData[indexPath.row].name
         return cell
     }
     
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
        
-        let storyboard = UIStoryboard(name: "Main", bundle: nil)
-        let vc = storyboard.instantiateViewController(withIdentifier: "ProjectDetailController") as! ProjectDetailController
-        vc.projectId = filteredData[indexPath.row].projectId
-        self.navigationController?.pushViewController(vc, animated: true)
+        coordinator?.projectDetail(projectId: projectViewModel.filteredData[indexPath.row].projectId)
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -68,7 +71,7 @@ extension ProjectController: UITableViewDelegate, UITableViewDataSource {
 extension ProjectController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
-        filteredData = searchText.isEmpty ? projectsArray : projectsArray?.filter { (item: Project) -> Bool in
+        projectViewModel.filteredData = searchText.isEmpty ? projectViewModel.projects : projectViewModel.projects?.filter { (item: Project) -> Bool in
             
             return item.name.range(of: searchText, options: .caseInsensitive, range: nil, locale: nil) != nil
         }

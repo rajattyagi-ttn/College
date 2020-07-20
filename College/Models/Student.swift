@@ -13,7 +13,6 @@ class Student: Object {
     @objc dynamic var id: Int
     @objc dynamic var name: String
     @objc dynamic var course: Course?
-//    var courses = List<Course>()
     @objc dynamic var project: Project?
     
     init(id: Int, name: String) {

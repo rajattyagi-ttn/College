@@ -9,35 +9,33 @@
 import UIKit
 import RealmSwift
 
-class StudentDetailController: UIViewController {
+class StudentDetailController: UIViewController, Storyboarded {
 
     @IBOutlet weak var studentNameLabel: UILabel!
     @IBOutlet weak var studentIdLabel: UILabel!
     @IBOutlet weak var studentCourseLabel: UILabel!
     @IBOutlet weak var studentProjectLabel: UILabel!
     
+    var coordinator: StudentCoordinator?
     var studentId = 1
     let realm = try! Realm()
     
-    var studentList: Results<Student>?
-    var selectedStudent: Student?
+    var studentDetailViewModel = StudentDetailViewModel()
+    
     var messageToken: NotificationToken?
     
     override func viewDidLoad() {
         
         super.viewDidLoad()
-        self.studentList = realm.objects(Student.self).filter("id = \(studentId)")
-        
-        selectedStudent = studentList?.last
-
-        configureStudent(student: selectedStudent!)
+        studentDetailViewModel.getStudent(studentId: studentId)
+        configureStudent(student: studentDetailViewModel.student)
         
         updateProjectOnChange()
         
     }
     
     func updateProjectOnChange() {
-        messageToken = selectedStudent?.observe { [weak self] change in
+        messageToken = studentDetailViewModel.student?.observe { [weak self] change in
             switch change {
             case .change(_ , let properties):
                 
@@ -45,9 +43,9 @@ class StudentDetailController: UIViewController {
                 for property in properties {
                     if property.name == "project" && property.newValue != nil {
                         try! self?.realm.write {
-                            self?.selectedStudent?.project = (property.newValue as! Project)
+                            self?.studentDetailViewModel.student?.project = (property.newValue as! Project)
                         }
-                        guard let updatedProjectName = self?.selectedStudent?.project?.name else {return}
+                        guard let updatedProjectName = self?.studentDetailViewModel.student?.project?.name else {return}
                         self?.studentProjectLabel.text = "Project : \(String(describing: updatedProjectName))"
                         
                         self?.messageToken = nil
